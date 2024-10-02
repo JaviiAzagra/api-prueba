@@ -46,5 +46,6 @@ server.use((error, req, res, next) => {
         .json(error.message || "unexpected error");
 });
 
-// Exportar la instancia de Express
-module.exports = server;
+server.listen(PORT || 3000, () => {
+    console.log(`Server running on --> http://localhost:${PORT}`);
+});
