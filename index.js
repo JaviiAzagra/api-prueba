@@ -6,6 +6,7 @@ const connectDb = require("./src/utils/database/db");
 const server = express();
 
 const indexRoutes = require("./src/api/routes/index.routes");
+const userRoutes = require("./src/api/routes/users.routes");
 const peripheralRoutes = require("./src/api/routes/peripherals.routes");
 
 const PORT = process.env.PORT;
@@ -16,7 +17,6 @@ cloudinary.config({
     api_secret: process.env.API_SECRET,
 });
 
-/* db.connectDb(DB_URL); */
 connectDb();
 
 server.use(
@@ -33,6 +33,7 @@ server.use(express.urlencoded({ extended: false }));
 
 server.use("/", indexRoutes);
 server.use("/peripherals", peripheralRoutes);
+server.use("/users", userRoutes);
 
 server.use("*", (req, res) => {
     const error = new Error("PATH NOT FOUND! 404");
