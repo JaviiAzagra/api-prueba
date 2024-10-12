@@ -22,9 +22,11 @@ cloudinary.config({
 
 connectDb();
 
+const allowedOrigins = ["http://192.168.1.43:3001"];
+
 server.use(
   cors({
-    origin: "*",
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
