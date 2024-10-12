@@ -40,17 +40,18 @@ router.post("/login", async (req, res, next) => {
     console.log("Email:", req.body.email); // Log para ver el email
     const userDB = await User.findOne({ email: req.body.email });
     if (!userDB) {
-      /* console.log("User not found");  */
+      console.log("User not found"); // Log si no se encuentra el usuario
       return res.status(404).json("User does not exist");
     }
     const isMatch = bcrypt.compareSync(req.body.password, userDB.password);
-    /* console.log("Password match:", isMatch); */
+    console.log("Password match:", isMatch); // Log para ver si las contraseñas coinciden
     if (isMatch) {
       const token = generateSign(userDB._id, userDB.email);
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "none",
+        /* secure: process.env.NODE_ENV === "production", */
+        secure: true,
+        sameSite: "None",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       return res.status(200).json({ userDB });

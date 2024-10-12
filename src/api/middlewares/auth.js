@@ -3,25 +3,18 @@ const { verifyJwt } = require("../../utils/jwt/jwt");
 
 const isAuth = async (req, res, next) => {
   try {
-    // Leer el token desde la cookie en lugar del encabezado de autorización
-    const token = req.cookies.token;
+    // Aquí estás buscando el token en las cookies
+    const token = req.cookies.token; // Accediendo al token desde las cookies
     if (!token) {
-      return next("Unauthorized");
+      return res.status(401).json({ message: "Unauthorized" });
     }
-
     const validToken = verifyJwt(token);
     const userLogged = await User.findById(validToken.id);
-
-    if (!userLogged) {
-      return next("User not found");
-    }
-
-    // Remover la contraseña antes de pasar el usuario a la request
     userLogged.password = null;
     req.user = userLogged;
     next();
   } catch (error) {
-    return next("Error");
+    return res.status(401).json({ message: error.message });
   }
 };
 
