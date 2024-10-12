@@ -7,100 +7,133 @@ const { uploadFile } = require("../middlewares/cloudinary");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-    try {
-        const allUsers = await User.find();
-        return res.status(200).json(allUsers);
-    } catch (error) {
-        return res.status(500).json("Error al leer los usuarios");
-    }
+  try {
+    const allUsers = await User.find();
+    return res.status(200).json(allUsers);
+  } catch (error) {
+    return res.status(500).json("Error al leer los usuarios");
+  }
 });
 
 router.get("/id", [isAuth], async (req, res, next) => {
-    try {
-        const userID = req.user._id;
-        const user = await User.findById(userID);
-        return res.status(200).json(user);
-    } catch (error) {
-        return next(error);
-    }
+  try {
+    const userID = req.user._id;
+    const user = await User.findById(userID);
+    return res.status(200).json(user);
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.get("/:email", [isAdmin], async (req, res, next) => {
-    try {
-        const email = req.params.email;
-        const user = await User.findOne({ email: email });
-        return res.status(200).json(user);
-    } catch (error) {
-        return next(error);
-    }
+  try {
+    const email = req.params.email;
+    const user = await User.findOne({ email: email });
+    return res.status(200).json(user);
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.post("/login", async (req, res, next) => {
-    try {
-        const userDB = await User.findOne({ email: req.body.email });
-        if (!userDB) {
-            return res.status(404).json("User does not exist");
-        }
-        if (bcrypt.compareSync(req.body.password, userDB.password)) {
-            const token = generateSign(userDB._id, userDB.email);
-            return res.status(200).json({ token, userDB });
-        } else {
-            return res.status(200).json("Password is incorrect!");
-        }
-    } catch (error) {
-        return next(error);
+  try {
+    console.log("Email:", req.body.email); // Log para ver el email
+    const userDB = await User.findOne({ email: req.body.email });
+    if (!userDB) {
+      /* console.log("User not found");  */
+      return res.status(404).json("User does not exist");
     }
+    const isMatch = bcrypt.compareSync(req.body.password, userDB.password);
+    /* console.log("Password match:", isMatch); */
+    if (isMatch) {
+      const token = generateSign(userDB._id, userDB.email);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      return res.status(200).json({ userDB });
+    } else {
+      console.log("Incorrect password"); // Log si la contraseña es incorrecta
+      return res.status(401).json("Password is incorrect!");
+    }
+  } catch (error) {
+    console.error("Error in login:", error); // Log para errores
+    return next(error);
+  }
 });
 
 router.post("/logout", async (req, res, next) => {
-    try {
-        const token = null;
-        return res.status(200).json(token);
-    } catch (error) {
-        return next(error);
-    }
+  try {
+    res.clearCookie("token");
+    return res.status(200).json("Logout successful");
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.post("/create", async (req, res) => {
-    try {
-        const newUser = new User(req.body);
-        const createdUser = await newUser.save();
-        return res.status(201).json(createdUser);
-    } catch (error) {
-        return res.status(500).json("No se ha podido crear el usuario");
+  try {
+    const { email, password, name, surname, phone, gender } = req.body;
+
+    // Verificar si el usuario ya existe
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "El usuario ya existe" });
     }
+
+    // Crear un nuevo usuario
+    const newUser = new User({
+      email,
+      password,
+      name,
+      surname,
+      phone,
+      gender,
+    });
+
+    const createdUser = await newUser.save();
+    return res.status(201).json(createdUser);
+  } catch (error) {
+    console.error(error); // Agrega esta línea para registrar el error
+    return res.status(500).json({
+      message: "No se ha podido crear el usuario",
+      error: error.message,
+    });
+  }
 });
 
 router.delete("/delete/:id", [isAdmin], async (req, res, next) => {
-    try {
-        const id = req.params.id;
-        await User.findByIdAndDelete(id);
-        return res.status(200).json("User deleted successfully!");
-    } catch (error) {
-        return next(error);
-    }
+  try {
+    const id = req.params.id;
+    await User.findByIdAndDelete(id);
+    return res.status(200).json("User deleted successfully!");
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.put("/edit/:id", [isAdmin], async (req, res, next) => {
-    try {
-        const id = req.params.id;
-        const user = req.body;
-        const userModify = new User(user);
-        userModify._id = id;
-        await User.findByIdAndUpdate(id, userModify);
-        return res.status(200).json("User edited successfully!");
-    } catch (error) {
-        return next(error);
-    }
+  try {
+    const id = req.params.id;
+    const user = req.body;
+    const userModify = new User(user);
+    userModify._id = id;
+    await User.findByIdAndUpdate(id, userModify);
+    return res.status(200).json("User edited successfully!");
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.post("/checksession", [isAuth], async (req, res, next) => {
-    console.log(req.header.authorization);
-    try {
-        return res.status(200).json(req.user);
-    } catch (error) {
-        return res.status(500).json(error);
-    }
+  console.log(req.header.authorization);
+  try {
+    return res.status(200).json(req.user);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
 });
 
 module.exports = router;
