@@ -27,7 +27,7 @@ const allowedOrigins = [
   "http://192.168.1.43:3000",
   "http://192.168.1.40:3000",
   "http://localhost:3000",
-  "https://api-prueba-fronted.vercel.app/",
+  "https://api-prueba-fronted.vercel.app",
 ];
 
 server.use(
