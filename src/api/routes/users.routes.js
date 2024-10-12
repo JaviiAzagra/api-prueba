@@ -48,7 +48,7 @@ router.post("/login", async (req, res, next) => {
     if (isMatch) {
       const token = generateSign(userDB._id, userDB.email);
       res.cookie("token", token, {
-        httpOnly: false,
+        httpOnly: true,
         /* secure: process.env.NODE_ENV === "production", */
         secure: true,
         sameSite: "None",
