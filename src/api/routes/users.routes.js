@@ -6,6 +6,8 @@ const User = require("../models/users.model");
 const { uploadFile } = require("../middlewares/cloudinary");
 const router = express.Router();
 
+//secure: process.env.NODE_ENV === "development",
+
 router.get("/", async (req, res) => {
   try {
     const allUsers = await User.find();
@@ -49,8 +51,8 @@ router.post("/login", async (req, res, next) => {
       const token = generateSign(userDB._id, userDB.email);
       res.cookie("token", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "development",
-        sameSite: "Lax",
+        secure: true,
+        sameSite: "None",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       return res.status(200).json({ userDB });
